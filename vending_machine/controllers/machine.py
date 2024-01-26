@@ -34,7 +34,10 @@ async def reset(
     current_user: UserWithoutPassword = Depends(get_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> bool:
-    # Remove all products stored in JWT
-    current_user.products = []
-    await db.commit()
-    return True
+    try:
+        await db.query(SessionProduct).filter(SessionProduct.user_id == current_user.id).delete()
+        await db.commit()
+        return True
+    except Exception as e:
+        routes.app.logger.error(e)
+        raise HTTPException(status_code=500, detail="Internal server error")

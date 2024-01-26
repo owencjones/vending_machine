@@ -10,7 +10,8 @@ from vending_machine.config import settings
 from vending_machine.data_objects.role import Role
 from vending_machine.models.token import TokenData
 from vending_machine.models.user import User, UserWithoutPassword
-from vending_machine.models.session import Session
+from vending_machine.models.session import UserSession
+from vending_machine.models.session_product import SessionProduct
 from vending_machine.database import SessionLocal
 
 app = FastAPI()
@@ -52,9 +53,9 @@ def create_access_token(
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
     most_recent_session = (
-        db.query(Session)
-        .filter(Session.user_id == data["sub"])
-        .order_by(Session.expiry_time.desc())
+        db.query(UserSession)
+        .filter(UserSession.user_id == data["sub"])
+        .order_by(UserSession.expiry_time.desc())
         .last()
     )
 
@@ -65,11 +66,12 @@ def create_access_token(
             status_code=400, detail="Cannot log into a user with an active session"
         )
 
-    db.query(Session).filter(Session.user_id == data["sub"]).delete()
+    db.query(UserSession).filter(UserSession.user_id == data["sub"]).delete()
+    db.query(SessionProduct).filter(SessionProduct.user_id == data["sub"]).delete()
     db.commit()
 
     db.add(
-        Session(
+        UserSession(
             user_id=data["sub"],
             expiry_time=expire,
         )
