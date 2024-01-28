@@ -4,8 +4,11 @@ from typing import List
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.docs import (get_redoc_html, get_swagger_ui_html,
-                                  get_swagger_ui_oauth2_redirect_html)
+from fastapi.openapi.docs import (
+    get_redoc_html,
+    get_swagger_ui_html,
+    get_swagger_ui_oauth2_redirect_html,
+)
 
 from vending_machine.config import settings
 from vending_machine.logging import get_logger
@@ -94,7 +97,11 @@ def main() -> FastAPI:
     @app.middleware("http")
     async def set_default_content_type(request, call_next):
         response = await call_next(request)
-        response.headers["Content-Type"] = "application/json"
+        if request.url.path.endswith("/docs"):
+            response.headers["Content-Type"] = "text/html"
+        else:
+            response.headers["Content-Type"] = "application/json"
+
         return response
 
     routes = get_routes_from_controllers()

@@ -6,19 +6,37 @@ from vending_machine.authentication import get_buyer_or_seller_user
 from vending_machine.config import settings
 from vending_machine.database import get_db
 from vending_machine.logging import get_logger
-from vending_machine.models.user import (User, UserCreate, UserUpdate,
-                                         UserWithoutPassword)
+from vending_machine.models.user import (
+    User,
+    UserCreate,
+    UserUpdate,
+    UserWithoutPassword,
+)
 
 routes = APIRouter()
 logger = get_logger(__name__)
 
 
 # Create a user
-@routes.post("/users/create", response_model=UserWithoutPassword)
+@routes.post("/users/create", response_model=UserWithoutPassword, tags=["users"])
 async def create_user(
     user: UserCreate,
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
+    """
+    Create a new user.
+
+    Args:
+        user (UserCreate): The user data to create.
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
+
+    Returns:
+        UserWithoutPassword: The created user without the password.
+
+    Raises:
+        HTTPException: If there is a validation error or an internal server error occurs.
+    """
+
     try:
         new_user = User(**user.model_dump())
 
@@ -40,11 +58,25 @@ async def create_user(
 
 
 # Retrieve all users
-@routes.get("/users", response_model=list[UserWithoutPassword])
+@routes.get("/users", response_model=list[UserWithoutPassword], tags=["users"])
 async def get_users(
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[UserWithoutPassword]:
+    """
+    Retrieve a list of users.
+
+    Args:
+        current_user (UserWithoutPassword): The current authenticated user.
+        db (AsyncSession): The database session.
+
+    Returns:
+        list[UserWithoutPassword]: A list of users without their password.
+
+    Raises:
+        HTTPException: If the user is not authorized or if there is an internal server error.
+    """
+
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -63,12 +95,29 @@ async def get_users(
 
 
 # Retrieve a user by id or username
-@routes.get("/users/{user_id_or_password}", response_model=UserWithoutPassword)
+@routes.get(
+    "/users/{user_id_or_password}", response_model=UserWithoutPassword, tags=["users"]
+)
 async def get_user(
     user_id_or_password: str,
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
+    """
+    Retrieve a user by their ID or username.
+
+    Args:
+        user_id_or_password (str): The ID or username of the user to retrieve.
+        current_user (UserWithoutPassword, optional): The current authenticated user. Defaults to Depends(get_buyer_or_seller_user).
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
+
+    Returns:
+        UserWithoutPassword: The retrieved user.
+
+    Raises:
+        HTTPException: If the user is not found or if there is an internal server error.
+    """
+
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -96,13 +145,31 @@ async def get_user(
 
 
 # Update a user by id or username
-@routes.put("/users/{user_id_or_password}", response_model=UserWithoutPassword)
+@routes.put(
+    "/users/{user_id_or_password}", response_model=UserWithoutPassword, tags=["users"]
+)
 async def update_user(
     user_id_or_password: str,
     user: UserUpdate,
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
+    """
+    Update a user's information in the database.
+
+    Args:
+        user_id_or_password (str): The user's ID or password.
+        user (UserUpdate): The updated user information.
+        current_user (UserWithoutPassword, optional): The current authenticated user. Defaults to Depends(get_buyer_or_seller_user).
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
+
+    Returns:
+        UserWithoutPassword: The updated user information without the password.
+
+    Raises:
+        HTTPException: If the user is not authorized, the user is not found, or there is an internal server error.
+    """
+
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -135,6 +202,9 @@ async def update_user(
 
 
 # Delete a user by id or username
+@routes.delete(
+    "/users/{user_id_or_password}", response_model=UserWithoutPassword, tags=["users"]
+)
 async def delete_user(
     user_id_or_password: str,
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),

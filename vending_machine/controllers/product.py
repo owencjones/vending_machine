@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from vending_machine.authentication import (get_buyer_or_seller_user,
-                                            get_seller_user)
+from vending_machine.authentication import get_buyer_or_seller_user, get_seller_user
 from vending_machine.config import settings
 from vending_machine.database import get_db
 from vending_machine.logging import get_logger
+from vending_machine.models.api_messages import ApiMessage
 from vending_machine.models.product import Product, ProductCreate
 from vending_machine.models.user import UserWithoutPassword
 
@@ -16,12 +16,27 @@ logger = get_logger(__name__)
 
 
 # Create a product
-@routes.post("/products/create", response_model=Product)
+@routes.post("/products/create", response_model=Product, tags=["products"])
 async def create_product(
     product: ProductCreate,
     current_user: UserWithoutPassword = Depends(get_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> Product:
+    """
+    Create a product in the vending machine.
+
+    Args:
+        product (ProductCreate): The product data.
+        current_user (UserWithoutPassword, optional): The current user making the request. Defaults to the seller user.
+        db (AsyncSession, optional): The database session. Defaults to the session obtained from get_db().
+
+    Returns:
+        Product: The created product.
+
+    Raises:
+        HTTPException: If the user is not authorized or if there is an internal server error.
+        ValidationError: If there are validation errors in the product data.
+    """
     try:
         new_product = Product(**product.model_dump())
         new_product.seller_id = current_user.id
@@ -44,11 +59,25 @@ async def create_product(
 
 
 # Get all Products
-@routes.get("/products", response_model=list[Product])
+@routes.get("/products", response_model=list[Product], tags=["products"])
 async def get_products(
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[Product]:
+    """
+    Retrieve a list of products from the database.
+
+    Args:
+        current_user (UserWithoutPassword): The current user making the request.
+        db (AsyncSession): The database session.
+
+    Returns:
+        list[Product]: A list of Product objects retrieved from the database.
+
+    Raises:
+        HTTPException: If the user is not authorized or if there is an internal server error.
+    """
+
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -67,12 +96,26 @@ async def get_products(
 
 
 # Get one Product
-@routes.get("/products/{product_id}", response_model=Product)
+@routes.get("/products/{product_id}", response_model=Product, tags=["products"])
 async def get_product(
     product_id: int,
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> Product:
+    """
+    Retrieve a product by its ID.
+
+    Args:
+        product_id (int): The ID of the product to retrieve.
+        current_user (UserWithoutPassword, optional): The current user. Defaults to Depends(get_buyer_or_seller_user).
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
+
+    Returns:
+        Product: The retrieved product.
+
+    Raises:
+        HTTPException: If the user is not authorized or if there is an internal server error.
+    """
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -91,13 +134,29 @@ async def get_product(
 
 
 # Update a product
-@routes.put("/products/{product_id}", response_model=Product)
+@routes.put("/products/{product_id}", response_model=Product, tags=["products"])
 async def update_product(
     product_id: int,
     product: ProductCreate,
     current_user: UserWithoutPassword = Depends(get_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> Product:
+    """
+    Update a product in the vending machine.
+
+    Args:
+        product_id (int): The ID of the product to be updated.
+        product (ProductCreate): The updated product data.
+        current_user (UserWithoutPassword, optional): The current user making the request. Defaults to the seller user.
+        db (AsyncSession, optional): The database session. Defaults to the session obtained from get_db().
+
+    Returns:
+        Product: The updated product.
+
+    Raises:
+        HTTPException: If the user is not authorized, the product does not exist, or there is a server error.
+        ValidationError: If there are validation errors in the updated product data.
+    """
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -132,7 +191,21 @@ async def delete_product(
     product_id: int,
     current_user: UserWithoutPassword = Depends(get_seller_user),
     db: AsyncSession = Depends(get_db),
-) -> None:
+) -> ApiMessage:
+    """
+    Delete a product from the vending machine.
+
+    Args:
+        product_id (int): The ID of the product to be deleted.
+        current_user (UserWithoutPassword, optional): The current user making the request. Defaults to the seller user.
+        db (AsyncSession, optional): The database session. Defaults to the session obtained from get_db().
+
+    Returns:
+        ApiMessage: A message indicating the success of the deletion.
+
+    Raises:
+        HTTPException: If the user is not authorized, the product does not exist, or there is a server error.
+    """
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
@@ -146,8 +219,12 @@ async def delete_product(
         db.delete(product)
         await db.commit()
 
+        return ApiMessage(message="Product deleted", success=True)
+
+    except HTTPException as e:
+        raise e
     except AssertionError as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=403, detail=f"Internal server error: {str(e)}")
     except Exception as e:
         if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))

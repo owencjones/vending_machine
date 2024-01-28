@@ -10,7 +10,7 @@ routes = APIRouter()
 logger = get_logger(__name__)
 
 
-@routes.get("/heartbeat")
+@routes.get("/heartbeat", tags=["status"])
 async def heartbeat(
     db: Depends = Depends(get_db),
 ) -> Any:

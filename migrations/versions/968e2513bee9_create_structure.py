@@ -5,11 +5,11 @@ Revises:
 Create Date: 2024-01-28 20:57:14.631403
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "968e2513bee9"
@@ -49,8 +49,12 @@ def upgrade() -> None:
     op.create_table(
         "session_products",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("session_id", sa.Integer, sa.ForeignKey("sessions.id"), nullable=False),
-        sa.Column("product_id", sa.Integer, sa.ForeignKey("products.id"), nullable=False),
+        sa.Column(
+            "session_id", sa.Integer, sa.ForeignKey("sessions.id"), nullable=False
+        ),
+        sa.Column(
+            "product_id", sa.Integer, sa.ForeignKey("products.id"), nullable=False
+        ),
     )
 
 
