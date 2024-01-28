@@ -3,15 +3,14 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from vending_machine.authentication import get_buyer_or_seller_user
+from vending_machine.config import settings
 from vending_machine.database import get_db
-from vending_machine.models.user import (
-    User,
-    UserCreate,
-    UserUpdate,
-    UserWithoutPassword,
-)
+from vending_machine.logging import get_logger
+from vending_machine.models.user import (User, UserCreate, UserUpdate,
+                                         UserWithoutPassword)
 
 routes = APIRouter()
+logger = get_logger(__name__)
 
 
 # Create a user
@@ -30,9 +29,11 @@ async def create_user(
         return UserWithoutPassword(new_user)
 
     except ValidationError as e:
+        logger.info(e)
         raise HTTPException(status_code=400, detail=e.errors())
     except Exception as e:
-        if routes.app.debug:
+        logger.error(e)
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
@@ -45,17 +46,17 @@ async def get_users(
     db: AsyncSession = Depends(get_db),
 ) -> list[UserWithoutPassword]:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         users = await db.query(User).all()
 
         return [UserWithoutPassword(user) for user in users]
     except AssertionError as e:
+        logger.info(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except Exception as e:
-        if routes.app.debug:
+        logger.error(e)
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
@@ -69,9 +70,7 @@ async def get_user(
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         if user_id_or_password.isdigit():
             user: User = db.query(User).filter(User.id == user_id_or_password).first()
@@ -84,10 +83,13 @@ async def get_user(
             raise HTTPException(status_code=404, detail="User not found")
 
     except AssertionError as e:
+        logger.info(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except HTTPException as e:
+        logger.info(e)
         raise e
     except Exception as e:
+        logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
     return UserWithoutPassword(user)
@@ -102,9 +104,7 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         if user_id_or_password.isdigit():
             user: User = db.query(User).filter(User.id == user_id_or_password).first()
@@ -122,10 +122,13 @@ async def update_user(
         await db.refresh(user)
 
     except AssertionError as e:
+        logger.info(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except HTTPException as e:
+        logger.info(e)
         raise e
     except Exception as e:
+        logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
     return UserWithoutPassword(user)
@@ -138,9 +141,7 @@ async def delete_user(
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         if user_id_or_password.isdigit():
             user: User = db.query(User).filter(User.id == user_id_or_password).first()
@@ -156,10 +157,13 @@ async def delete_user(
         await db.commit()
 
     except AssertionError as e:
+        logger.info(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except HTTPException as e:
+        logger.info(e)
         raise e
     except Exception as e:
+        logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
     return UserWithoutPassword(user)

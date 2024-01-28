@@ -1,15 +1,16 @@
 import importlib
-import logging
 from pathlib import Path
 from typing import List
 
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import (get_redoc_html, get_swagger_ui_html,
+                                  get_swagger_ui_oauth2_redirect_html)
 
 from vending_machine.config import settings
-from vending_machine.database import get_db
+from vending_machine.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def get_routes_from_controllers() -> List[APIRouter]:
@@ -30,7 +31,9 @@ def get_routes_from_controllers() -> List[APIRouter]:
             continue
 
         if module_routes:
-            logger.info(f"Imported {len(module_routes.routes)} routes from {module_name}")
+            logger.info(
+                f"Imported {len(module_routes.routes)} routes from {module_name}"
+            )
             routes.append(module_routes)
         else:
             logger.info(f"No routes found in {module_name}")
@@ -39,23 +42,43 @@ def get_routes_from_controllers() -> List[APIRouter]:
 
 
 def main() -> FastAPI:
-    logger.setLevel(logging.INFO)
-
-    # Add a handler to the logger
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
     logger.info("Starting the application")
 
     logger.info("Connecting to the DB")
-    app = FastAPI(title=settings.app_name, debug=settings.debug, dependencies=[Depends(get_db)])
+    app = FastAPI(
+        title=settings.app_name,
+        debug=settings.debug,
+    )
+
+    if settings.debug:
+        logger.info("Adding Swagger UI")
+
+        @app.get("/docs", include_in_schema=False)
+        async def custom_swagger_ui_html():
+            return get_swagger_ui_html(
+                openapi_url=app.openapi_url,
+                title=app.title + " - Swagger UI",
+                oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+                swagger_js_url="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
+                swagger_css_url="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css",
+            )
+
+        @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
+        async def swagger_ui_redirect():
+            return get_swagger_ui_oauth2_redirect_html()
+
+        @app.get("/redoc", include_in_schema=False)
+        async def redoc_html():
+            return get_redoc_html(
+                openapi_url=app.openapi_url,
+                title=app.title + " - ReDoc",
+                redoc_js_url="https://unpkg.com/redoc@next/bundles/redoc.standalone.js",
+            )
+
     logger.info("Connection established")
 
     if settings.debug:
         logger.info("Running in debug mode")
-        logger.setLevel(logging.DEBUG)
 
         app.add_middleware(
             CORSMiddleware,
@@ -87,7 +110,10 @@ if __name__ == "__main__":
 
     app = main()
 
-    if settings.debug:
-        uvicorn.run(app, host="0.0.0.0", port=8000, reload=True, log_level="debug")
-    else:
-        uvicorn.run(app, host=settings.host or "0.0.0.0", port=settings.port or 8000)
+    uvicorn.run(
+        app,
+        host=settings.host or "0.0.0.0",
+        port=settings.port or 8000,
+        log_level="debug" if settings.debug else "info",
+        reload=settings.debug,
+    )

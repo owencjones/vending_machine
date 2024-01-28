@@ -2,12 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from vending_machine.authentication import get_buyer_or_seller_user, get_seller_user
+from vending_machine.authentication import (get_buyer_or_seller_user,
+                                            get_seller_user)
+from vending_machine.config import settings
 from vending_machine.database import get_db
-from vending_machine.models.user import UserWithoutPassword
+from vending_machine.logging import get_logger
 from vending_machine.models.product import Product, ProductCreate
+from vending_machine.models.user import UserWithoutPassword
 
 routes = APIRouter()
+
+logger = get_logger(__name__)
 
 
 # Create a product
@@ -28,9 +33,11 @@ async def create_product(
         return Product(new_product)
 
     except ValidationError as e:
+        logger.info(e)
         raise HTTPException(status_code=400, detail=e.errors())
     except Exception as e:
-        if routes.app.debug:
+        logger.error(e)
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
@@ -43,17 +50,17 @@ async def get_products(
     db: AsyncSession = Depends(get_db),
 ) -> list[Product]:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         products = await db.query(Product).all()
 
         return [Product(product) for product in products]
     except AssertionError as e:
+        logger.info(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except Exception as e:
-        if routes.app.debug:
+        logger.error(e)
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
@@ -67,20 +74,21 @@ async def get_product(
     db: AsyncSession = Depends(get_db),
 ) -> Product:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         product = await db.query(Product).filter(Product.id == product_id).first()
 
         return Product(product)
     except AssertionError as e:
+        logger.info(e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except Exception as e:
-        if routes.app.debug:
+        logger.error(e)
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
+
 
 # Update a product
 @routes.put("/products/{product_id}", response_model=Product)
@@ -91,9 +99,7 @@ async def update_product(
     db: AsyncSession = Depends(get_db),
 ) -> Product:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         product = await db.query(Product).filter(Product.id == product_id).first()
 
@@ -114,11 +120,11 @@ async def update_product(
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=e.errors())
     except Exception as e:
-        if routes.app.debug:
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
-        
+
 
 # Delete a product
 @routes.delete("/products/{product_id}")
@@ -128,9 +134,7 @@ async def delete_product(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     try:
-        assert isinstance(
-            current_user, UserWithoutPassword
-        ), "User was not authorised"  # Probably unnecessary defensive coding
+        assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 
         product = await db.query(Product).filter(Product.id == product_id).first()
 
@@ -145,7 +149,7 @@ async def delete_product(
     except AssertionError as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     except Exception as e:
-        if routes.app.debug:
+        if settings.debug:
             raise HTTPException(status_code=500, detail=str(e))
         else:
             raise HTTPException(status_code=500, detail="Internal server error")

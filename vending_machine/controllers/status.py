@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
-from vending_machine.database import get_db
 from typing import Any
-from logging import getLogger
 
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.sql.expression import text
 
+from vending_machine.database import get_db
+from vending_machine.logging import get_logger
+
 routes = APIRouter()
-logger = getLogger(__name__)
+logger = get_logger(__name__)
+
 
 @routes.get("/heartbeat")
 async def heartbeat(

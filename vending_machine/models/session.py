@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from vending_machine.models.user import User
 from vending_machine.models.product import Product
+from vending_machine.models.user import User
 
 
 class UserSession(BaseModel):
@@ -11,9 +11,9 @@ class UserSession(BaseModel):
     user_id: int
     expiry_time: datetime
     deposited_amount: int
-    
+
     user: User
     products: list[Product]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

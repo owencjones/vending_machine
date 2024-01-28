@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = False
-    database_url: str = "sqlite:///./vending_machine.db"
+    database_url: str = "sqlite:///./vending_machine.sqlite"
     jwt_secret: str
     jwt_timeout: int = 3600
     jwt_algorithm: str = "HS256"
