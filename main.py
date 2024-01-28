@@ -1,4 +1,3 @@
-# Import the routes
 import importlib
 import logging
 from pathlib import Path
@@ -67,7 +66,6 @@ def main() -> FastAPI:
         )
 
     # Add the assets to the app
-    app.db = get_db()
     app.logger = logger
 
     @app.middleware("http")
