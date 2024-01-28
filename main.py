@@ -44,18 +44,14 @@ def main() -> FastAPI:
 
     # Add a handler to the logger
     handler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
     logger.info("Starting the application")
 
     logger.info("Connecting to the DB")
-    app = FastAPI(
-        title=settings.app_name, debug=settings.debug, dependencies=[Depends(get_db)]
-    )
+    app = FastAPI(title=settings.app_name, debug=settings.debug, dependencies=[Depends(get_db)])
     logger.info("Connection established")
 
     if settings.debug:
@@ -93,9 +89,7 @@ if __name__ == "__main__":
 
     app = main()
 
-    if settings.debug:    
-        uvicorn.run(
-            app, host="0.0.0.0", port=8000, reload=True, log_level="debug"
-        )
+    if settings.debug:
+        uvicorn.run(app, host="0.0.0.0", port=8000, reload=True, log_level="debug")
     else:
         uvicorn.run(app, host=settings.host or "0.0.0.0", port=settings.port or 8000)
