@@ -10,7 +10,7 @@ class SessionProduct(Base):
     id = Column(Integer, primary_key=True)
 
     product_id = Column(Integer, ForeignKey("products.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
+    session_id = Column(Integer, ForeignKey("user_sessions.id"))
 
-    session = relationship("UserSession", back_populates="products")
-    product = relationship("Product", back_populates="sessions")
+    session = relationship("UserSession", back_populates="user_sessions")
+    product = relationship("Product", back_populates="products")

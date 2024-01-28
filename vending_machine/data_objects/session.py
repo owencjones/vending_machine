@@ -12,5 +12,4 @@ class UserSession(Base):
     expiry_time = Column(DateTime)
     deposited_amount = Column(Integer)
 
-    products = relationship("SessionProduct", back_populates="session_products")
-    user = relationship("User", back_populates="sessions")
+    user = relationship("User", back_populates="users")
