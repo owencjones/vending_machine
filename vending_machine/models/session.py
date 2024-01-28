@@ -10,6 +10,8 @@ class UserSession(BaseModel):
     id: int
     user_id: int
     expiry_time: datetime
+    deposited_amount: int
+    
     user: User
     products: list[Product]
 
