@@ -1,7 +1,9 @@
-from vending_machine.models.product import Product as ORMProduct
 from typing import Literal
+
 from pydantic import Field
+
 from vending_machine.models import BasePydantic
+from vending_machine.models.product import Product as ORMProduct
 
 
 class ProductBase(BasePydantic):
@@ -21,6 +23,7 @@ class Product(ProductBase):
     id: int
 
     is_orm: Literal[True] = True
+
     @property
     def orm_model(self) -> ORMProduct:
         return ORMProduct(

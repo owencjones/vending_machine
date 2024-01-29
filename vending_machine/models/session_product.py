@@ -1,6 +1,7 @@
 from typing import Literal
-from vending_machine.models.session_product import SessionProduct as ORMSessionProduct
+
 from vending_machine.models import BasePydantic
+from vending_machine.models.session_product import SessionProduct as ORMSessionProduct
 
 
 class SessionProduct(BasePydantic):
@@ -9,6 +10,7 @@ class SessionProduct(BasePydantic):
     product_id: int
 
     is_orm: Literal[True] = True
+
     @property
     def orm_model(self) -> ORMSessionProduct:
         return ORMSessionProduct(

@@ -11,13 +11,15 @@ class BasePydantic(BaseModel):
 
     `orm_model` is the ORM model that corresponds to the Pydantic model.  If `is_orm` is False, this should be None.
     """
+
     is_orm: bool = False
     orm_model: object | None = None
 
     @validator("orm_model", always=True)
-    def orm_model_must_be_none_if_not_is_orm(cls, v: object | None, values: dict[str, object]) -> object | None:
-        if values.get('is_orm') is True and values.get('orm_model') is None:
+    def orm_model_must_be_none_if_not_is_orm(
+        cls, v: object | None, values: dict[str, object]
+    ) -> object | None:
+        if values.get("is_orm") is True and values.get("orm_model") is None:
             raise ValueError("orm_model must be set if is_orm is True")
-        
+
         return v
-    

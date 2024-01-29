@@ -1,11 +1,10 @@
 from datetime import datetime
-
-from vending_machine.models.product import Product
-from vending_machine.models.user import User
-
 from typing import Literal
-from vending_machine.models.session import UserSession as ORMUserSession
+
 from vending_machine.models import BasePydantic
+from vending_machine.models.product import Product
+from vending_machine.models.session import UserSession as ORMUserSession
+from vending_machine.models.user import User
 
 
 class UserSession(BasePydantic):
