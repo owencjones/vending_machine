@@ -1,8 +1,10 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from vending_machine.authentication import get_buyer_or_seller_user
+from vending_machine.authentication import get_buyer_or_seller_user, get_password_hash, user_create
 from vending_machine.config import settings
 from vending_machine.database import get_db
 from vending_machine.logging import get_logger
@@ -38,13 +40,10 @@ async def create_user(
     """
 
     try:
-        new_user = User(**user.model_dump())
+        new_user = user_create(db, user)
+        del user.password  # No longer need this in memory
 
-        db.add(new_user)
-        await db.commit()
-        await db.refresh(new_user)
-
-        return UserWithoutPassword(new_user)
+        return new_user
 
     except ValidationError as e:
         logger.info(e)

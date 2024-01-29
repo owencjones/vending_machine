@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -12,7 +13,8 @@ from vending_machine.database import SessionLocal
 from vending_machine.models.session import UserSession
 from vending_machine.models.session_product import SessionProduct
 from vending_machine.models.token import TokenData
-from vending_machine.models.user import User, UserWithoutPassword
+from vending_machine.models.user import User, UserCreate, UserWithoutPassword
+from vending_machine.data_objects.user import User as UserOrm
 
 app = FastAPI()
 
@@ -24,7 +26,7 @@ def _verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def _get_password_hash(password):
+def get_password_hash(password):
     return pwd_context.hash(password)
 
 
@@ -41,6 +43,21 @@ def authenticate_user(
     if not _verify_password(password, user.hashed_password):
         return False
     return UserWithoutPassword(**user.dict())
+
+
+def user_create(db: SessionLocal, user: UserCreate) -> UserWithoutPassword:
+    user_creation_object = {
+        **user.model_dump(),
+        **{"hashed_password": get_password_hash(user.password), "id": str(uuid4())},
+    }
+    del user_creation_object["password"]
+    new_user = UserOrm(**user_creation_object)
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return UserWithoutPassword(**new_user.__dict__)
 
 
 def create_access_token(
