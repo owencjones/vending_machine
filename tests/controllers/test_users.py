@@ -3,8 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from vending_machine.main import main
-from vending_machine.database import get_db
-from vending_machine.models.user import UserCreate, UserWithoutPassword
+from vending_machine.models.user import UserWithoutPassword
 
 
 @pytest.fixture(scope="module")
@@ -18,15 +17,44 @@ async def test_db():
     async with AsyncSession() as session:
         yield session
 
-
-def test_create_user(test_client, test_db):
-    user_data = {"username": "testuser", "password": "testpassword", "email": "testuser@example.com"}
+@pytest.mark.parametrize("role", ["BUYER", "SELLER"])
+def test_create_user_types(role, test_client):
+    user_data = {
+        "username": "testuser",
+        "role": role,
+        "password": "testpassword",
+    }
+    
     response = test_client.post("/users/create", json=user_data)
+    
     assert response.status_code == 200
     user = response.json()
+
+    assert user['username'] == user_data["username"]
+    assert user['role'] == user_data["role"]
+    assert "password" not in user
+    assert "hashed_password" not in user
+    assert user.deposit is None
+
+
+def test_create_seller_user(test_client, test_db):
+    user_data = {
+        "username": "testuser",
+        "role": "SELLER",
+        "password": "testpassword",
+    }
+    
+    response = test_client.post("/users/create", json=user_data)
+    
+    assert response.status_code == 200
+    user = response.json()
+    
     assert isinstance(user, UserWithoutPassword)
     assert user.username == user_data["username"]
-    assert user.email == user_data["email"]
+    assert user.role == user_data["role"]
+    assert "password" not in user.dict()
+    assert "hashed_password" not in user.dict()
+    assert user.deposit == 0
 
 
 def test_get_users(test_client, test_db):
