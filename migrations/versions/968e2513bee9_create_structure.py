@@ -21,17 +21,17 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "users",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("username", sa.String, nullable=False),
+        sa.Column("id", sa.String, primary_key=True),
+        sa.Column("username", sa.String, nullable=False, unique=True, index=True),
         sa.Column("deposit", sa.Integer, nullable=True),
-        sa.Column("role", sa.Enum("seller", "buyer"), nullable=False),
+        sa.Column("role", sa.Enum("SELLER", "BUYER"), nullable=False),
         sa.Column("hashed_password", sa.String, nullable=False),
         sa.Column("disabled", sa.Boolean, nullable=False),
     )
 
     op.create_table(
         "products",
-        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("id", sa.String, primary_key=True),
         sa.Column("amount_available", sa.Integer, nullable=False),
         sa.Column("cost", sa.Integer, nullable=False),
         sa.Column("product_name", sa.String, nullable=False),
@@ -40,20 +40,20 @@ def upgrade() -> None:
 
     op.create_table(
         "user_sessions",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("id", sa.String, primary_key=True),
+        sa.Column("user_id", sa.String, sa.ForeignKey("users.id"), nullable=False),
         sa.Column("expiry_time", sa.DateTime, nullable=False),
         sa.Column("deposited_amount", sa.Integer, nullable=False),
     )
 
     op.create_table(
         "session_products",
-        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("id", sa.String, primary_key=True),
         sa.Column(
-            "session_id", sa.Integer, sa.ForeignKey("sessions.id"), nullable=False
+            "session_id", sa.String, sa.ForeignKey("sessions.id"), nullable=False
         ),
         sa.Column(
-            "product_id", sa.Integer, sa.ForeignKey("products.id"), nullable=False
+            "product_id", sa.String, sa.ForeignKey("products.id"), nullable=False
         ),
     )
 
