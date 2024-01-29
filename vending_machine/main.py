@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 def get_routes_from_controllers() -> List[APIRouter]:
     here_path = Path(__file__).parent
-    route_files_dir = here_path / "vending_machine/controllers"
+    route_files_dir = here_path / "controllers"
     route_files = [f for f in route_files_dir.iterdir() if f.suffix == ".py"]
 
     routes: List[APIRouter] = []
