@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from vending_machine.data_objects.role import Role
-from vending_machine.models import BasePydantic
+
 
 class UserBase(BaseModel):
     username: str
@@ -30,7 +30,7 @@ class UserNew(UserBase):
         from_attributes = True
 
 
-class User(UserBase, BasePydantic):
+class User(UserBase):
     id: UUID
 
     hashed_password: str
