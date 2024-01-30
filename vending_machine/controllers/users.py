@@ -4,11 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from vending_machine.authentication import (
-    get_buyer_or_seller_user,
-    get_password_hash,
-    user_create,
-)
+from vending_machine.authentication import get_buyer_or_seller_user, get_password_hash, user_create
 from vending_machine.config import settings
 from vending_machine.database import get_db
 from vending_machine.logging import get_logger
@@ -34,6 +30,7 @@ async def create_user(
 
     Args:
         user (UserCreate): The user data to create.
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
 
     Returns:
         UserWithoutPassword: The created user without the password.
@@ -69,6 +66,8 @@ async def get_users(
     Retrieve a list of users.
 
     Args:
+        current_user (UserWithoutPassword): The current authenticated user.
+        db (AsyncSession): The database session.
 
     Returns:
         list[UserWithoutPassword]: A list of users without their password.
@@ -108,6 +107,8 @@ async def get_user(
 
     Args:
         user_id_or_password (str): The ID or username of the user to retrieve.
+        current_user (UserWithoutPassword, optional): The current authenticated user. Defaults to Depends(get_buyer_or_seller_user).
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
 
     Returns:
         UserWithoutPassword: The retrieved user.
@@ -156,8 +157,10 @@ async def update_user(
     Update a user's information in the database.
 
     Args:
-        user_id_or_password (str): The user's ID or password. (URL parameter)
-        user (UserUpdate): The updated user information. (Body parameter)
+        user_id_or_password (str): The user's ID or password.
+        user (UserUpdate): The updated user information.
+        current_user (UserWithoutPassword, optional): The current authenticated user. Defaults to Depends(get_buyer_or_seller_user).
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
 
     Returns:
         UserWithoutPassword: The updated user information without the password.
@@ -206,18 +209,6 @@ async def delete_user(
     current_user: UserWithoutPassword = Depends(get_buyer_or_seller_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserWithoutPassword:
-    """
-    Delete a user from the database.
-
-    Args:
-        user_id_or_password (str): The ID or username of the user to delete.
-
-    Returns:
-        UserWithoutPassword: The deleted user.
-
-    Raises:
-        HTTPException: If the user is not authorized, the user is not found, or there is an internal server error.
-    """
     try:
         assert isinstance(current_user, UserWithoutPassword), "User was not authorised"
 

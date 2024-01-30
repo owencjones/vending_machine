@@ -9,12 +9,12 @@ from passlib.context import CryptContext
 
 from vending_machine.config import settings
 from vending_machine.data_objects.role import Role
-from vending_machine.data_objects.user import User as UserOrm
 from vending_machine.database import SessionLocal
 from vending_machine.models.session import UserSession
 from vending_machine.models.session_product import SessionProduct
 from vending_machine.models.token import TokenData
 from vending_machine.models.user import User, UserCreate, UserWithoutPassword
+from vending_machine.data_objects.user import User as UserOrm
 
 app = FastAPI()
 

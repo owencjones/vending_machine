@@ -14,13 +14,6 @@ logger = get_logger(__name__)
 async def heartbeat(
     db: Depends = Depends(get_db),
 ) -> Any:
-    """
-    Check the status of the server.
-
-    Returns:
-        dict: The status of the server.
-    """
-
     try:
         system_time = db.execute(text("SELECT datetime('now')")).first()[0]
     except Exception as e:

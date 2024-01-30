@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from vending_machine.data_objects.role import Role
 from vending_machine.models import BasePydantic
 
-
 class UserBase(BaseModel):
     username: str
     role: Role  # Add role field with type Role

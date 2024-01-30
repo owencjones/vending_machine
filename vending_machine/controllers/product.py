@@ -27,6 +27,8 @@ async def create_product(
 
     Args:
         product (ProductCreate): The product data.
+        current_user (UserWithoutPassword, optional): The current user making the request. Defaults to the seller user.
+        db (AsyncSession, optional): The database session. Defaults to the session obtained from get_db().
 
     Returns:
         Product: The created product.
@@ -67,6 +69,7 @@ async def get_products(
 
     Args:
         current_user (UserWithoutPassword): The current user making the request.
+        db (AsyncSession): The database session.
 
     Returns:
         list[Product]: A list of Product objects retrieved from the database.
@@ -104,6 +107,8 @@ async def get_product(
 
     Args:
         product_id (int): The ID of the product to retrieve.
+        current_user (UserWithoutPassword, optional): The current user. Defaults to Depends(get_buyer_or_seller_user).
+        db (AsyncSession, optional): The database session. Defaults to Depends(get_db).
 
     Returns:
         Product: The retrieved product.
@@ -142,6 +147,8 @@ async def update_product(
     Args:
         product_id (int): The ID of the product to be updated.
         product (ProductCreate): The updated product data.
+        current_user (UserWithoutPassword, optional): The current user making the request. Defaults to the seller user.
+        db (AsyncSession, optional): The database session. Defaults to the session obtained from get_db().
 
     Returns:
         Product: The updated product.
@@ -190,6 +197,8 @@ async def delete_product(
 
     Args:
         product_id (int): The ID of the product to be deleted.
+        current_user (UserWithoutPassword, optional): The current user making the request. Defaults to the seller user.
+        db (AsyncSession, optional): The database session. Defaults to the session obtained from get_db().
 
     Returns:
         ApiMessage: A message indicating the success of the deletion.
