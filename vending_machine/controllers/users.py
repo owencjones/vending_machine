@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from vending_machine.authentication import get_buyer_or_seller_user, get_password_hash, user_create
+from vending_machine.authentication import (
+    get_buyer_or_seller_user,
+    get_password_hash,
+    user_create,
+)
 from vending_machine.config import settings
 from vending_machine.database import get_db
 from vending_machine.logging import get_logger
